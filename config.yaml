@@ -1,0 +1,35 @@
+# 学習データの保存場所
+csv: 'your_training_data-path'
+# DataLoaderのパラメータ
+batch_size: 8
+num_workers: 1
+# 学習時のパラメータ
+trainer:
+  accelerator: 'auto'
+  accumulate_grad_batches: 5
+  max_epochs: 100
+  precision: '16-mixed'
+  profiler: 'simple'
+  gradient_clip_val: 5.
+optimizer:
+  lr: 1.e-4
+# ログの保存場所
+logger:
+  save_dir: './'
+  version: 1
+  name: 'your-model-name'
+# 話者情報
+speakers:
+  save_path: 'speakers.pkl'
+# 中間モデルの保存
+checkpoint:
+  monitor: 'valid_corr'
+  filename: 'checkpoint_{epoch}-{step}-{valid_corr:.2f}'
+  save_last: True
+  save_top_k: 1
+  mode: 'max'
+  every_n_epochs: 1
+# 結果の表示方法など
+report:
+  path: 'your-result-csv-file'
+  confusion_matrix: 'your-confusion_matrix-file'
