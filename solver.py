@@ -16,6 +16,9 @@ class LightningSolver(pl.LightningModule):
         self.model = model
         if model is None:
             self.model = Baseline(config['num_speakers'])
+
+        self.loss = nn.CrossEntropyLoss(reduction='sum')
+
         self.num_corrects = self.num_samples = 0
         self.save_hyperparameters()
 
