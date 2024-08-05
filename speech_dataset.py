@@ -70,8 +70,8 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
     waves = []
     speakers = []
 
-    print(wave.dims())
     for wave, speaker in data:
+        print(wave.dims())
         # w/o channel
         waves.append(wave)
         speakers.append(speaker)
