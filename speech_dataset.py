@@ -32,7 +32,7 @@ class SpeechDataset(torch.utils.data.Dataset):
             self.speaker2idx = {}
             for idx, spk in enumerate(self.df['speaker'].unique()):
                 self.speaker2idx[spk] = idx
-        self.idx2speaker = {v: k for k, v in self.peaker2idx.items()}
+        self.idx2speaker = {v: k for k, v in self.speaker2idx.items()}
         print(len(self.idx2speaker))
 
         if speaker2idx is None and save_path is not None:
