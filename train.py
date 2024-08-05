@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 
 def train(config:dict, model):
 
-    lite = LightningSolver(config['num_speakers'], model)
+    lite = LightningSolver(config, model)
        
     train_dataset = SpeechDataset(csv_path=config['csv'], save_path=config['speakers']['save_path'], valid=False)
     train_loader = data.DataLoader(dataset=train_dataset,
