@@ -1,3 +1,5 @@
+# 話者数
+num_speakers: 10
 # 学習データの保存場所
 csv: 'your_training_data-path'
 # DataLoaderのパラメータ

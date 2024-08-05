@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+import os, sys
 import torch
 import torchaudio
 import pytorch_lightning as pl
@@ -7,7 +9,7 @@ from argparse import ArgumentParser
 import pandas as pd
 import yaml
 import pickle
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
 import pprint
 import warnings
 warnings.filterwarnings('ignore')
@@ -35,10 +37,14 @@ def predict(config:dict, model):
     # 全体の正解率など
     df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
     print(df)
-    df.to_csv(config['report']['path'])
+    df.to_csv(os.path.join(config['logger']['save_dir'], config['report']['path']))
 
     # 混同行列
-    confusion_matrix(targets, predicts, normalize='true')
+    cm = confusion_matrix(targets, predicts, normalize='true', labels = sorted(speaker2idx.items(), key=lambda x:x[1]))
+    disp = ConfusionMatrixDisplay(consusion_matrix=cm, display_labels=sorted(speaker2idx.items(), key=lambda x:x[1]))
+    disp.plot()
+    plt.save(os.path.join(config['logger']['save_dir'], config['report']['confusion_matrix']))
+    plt.show()
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -49,4 +55,4 @@ if __name__ == '__main__':
     with open(args.config, 'r') as yf:
         config = yaml.safe_load(yf)
         
-    predict(config)
+    predict(config) 
