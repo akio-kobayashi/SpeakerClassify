@@ -18,10 +18,11 @@ class SpeechDataset(torch.utils.data.Dataset):
     def __init__(self, csv_path:str, sample_rate=16000, speaker2idx=None, save_path=None, valid=False) -> None:
         super().__init__()
 
-        data_type = 'train'
+        self.data_type = 'train'
         if valid is True:
-            data_type = 'valid'
+            self.data_type = 'valid'
         self.df = pd.read_csv(csv_path).query('data_type == {data_type}')
+        print(len(self.df))
         self.sample_rate = sample_rate
 
         if speaker2idx is not None:
@@ -31,7 +32,8 @@ class SpeechDataset(torch.utils.data.Dataset):
             for idx, spk in enumerate(self.df['speaker'].unique()):
                 self.speaker2idx[spk] = idx
         self.idx2speaker = {v: k for k, v in self.peaker2idx.items()}
-
+        print(len(self.idx2speaker))
+        
         if speaker2idx is None and save_path is not None:
             with open(save_path, 'wb') as f:
                 pickle.dump(self.speaker2idx, f)
