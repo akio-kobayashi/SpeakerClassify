@@ -18,9 +18,7 @@ class SpeechDataset(torch.utils.data.Dataset):
     def __init__(self, csv_path:str, sample_rate=16000, speaker2idx=None, save_path=None, valid=False) -> None:
         super().__init__()
 
-        self.data_type = 'train'
-        if valid is True:
-            self.data_type = 'valid'
+        data_type = 'valid' if valid is True else 'train'
         self.df = pd.read_csv(csv_path).query('data_type==@data_type')
         #self.df = pd.read_csv(csv_path)
         self.sample_rate = sample_rate
