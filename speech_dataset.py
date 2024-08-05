@@ -72,13 +72,13 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
 
     for wave, speaker in data:
         # w/o channel
+        print(wave.shape)
         waves.append(wave)
         speakers.append(speaker)
 
     # 音声データはサンプル数（長さ）が異なるので，長さを揃える
     # 一番長いサンプルよりも短いサンプルに対してゼロ詰めで長さをあわせる
     # バッチはFloatTensorで（バッチサイズ，チャンネル，サンプル数）
-    print(len(waves))
     waves = nn.utils.rnn.pad_sequence(waves, batch_first=True)
 
     # 話者のインデックスを配列（Tensor）に変換
