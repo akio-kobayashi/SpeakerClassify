@@ -13,9 +13,9 @@ class LightningSolver(pl.LightningModule):
 
         self.optim_config=config['optimizer']
 
+        self.model = model
         if model is None:
             self.model = Baseline(config['num_speakers'])
-        self.model = model
         self.num_corrects = self.num_samples = 0
         self.save_hyperparameters()
 
