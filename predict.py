@@ -16,7 +16,7 @@ warnings.filterwarnings('ignore')
 
 def predict(config:dict, model):
 
-    lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config)
+    lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config).cuda()
     lite.eval()
 
     speaker2idx={}
@@ -30,7 +30,7 @@ def predict(config:dict, model):
         for idx, row in df.query('data_type=="eval"').iterrows():
             wave, sr = torchaudio.load(row['path'])
             wave = wave.unsqueeze(0)
-            logits = lite.forward(wave)
+            logits = lite.forward(wave.cuda())
             predicts.append(torch.argmax(logits, axis=-1).item())
             targets.append(speaker2idx[row['speaker']])
 
