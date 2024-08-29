@@ -14,7 +14,7 @@ import pprint
 import warnings
 warnings.filterwarnings('ignore')
 
-def predict(config:dict, model):
+def predict(config:dict):
 
     lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config).cuda()
     lite.eval()
