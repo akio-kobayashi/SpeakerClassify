@@ -81,7 +81,10 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
     # データはサンプル数（長さ）が異なるので，長さを揃える
     # 一番長いサンプルよりも短いサンプルに対してゼロ詰めで長さをあわせる
     # バッチはFloatTensorで（バッチサイズ，チャンネル，サンプル数）
+    _, c, _, _ = specs.shape
+    specs = rearrange(specs, 'b c f t -> b (c f) t')
     spees = nn.utils.rnn.pad_sequence(specs, batch_first=True)
+    specs = rearrange(specs, 'b (c f) t -> b c f t', c=c)
     #specs = rearrange(waves, 'b c f c -> b c f t')
     # 話者のインデックスを配列（Tensor）に変換
     speakers = torch.from_numpy(np.array(speakers)).clone()
