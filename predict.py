@@ -14,7 +14,7 @@ import pprint
 import warnings
 warnings.filterwarnings('ignore')
 
-def predict(config:dict):
+def predict(config:dict, data_type="eval"):
 
     lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config).cuda()
     lite.eval()
@@ -27,7 +27,7 @@ def predict(config:dict):
     predicts, targets = [], []
     with torch.no_grad():
         df = pd.read_csv(config['csv'])
-        for idx, row in df.query('data_type=="eval"').iterrows():
+        for idx, row in df.query('data_type==@data_type').iterrows():
             wave, sr = torchaudio.load(row['path'])
             wave = wave.unsqueeze(0)
             logits = lite.forward(wave.cuda())
@@ -37,7 +37,6 @@ def predict(config:dict):
     # 全体の正解率など
     df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
     print(df)
-    #df.to_csv(os.path.join(config['logger']['save_dir'], config['report']['path']))
     df.to_csv(config['report']['path'])
     
     # 混同行列
@@ -46,7 +45,6 @@ def predict(config:dict):
     cm = confusion_matrix(target_labels, predict_labels, normalize='true')
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     disp.plot()
-    #plt.save_fig(os.path.join(config['logger']['save_dir'], config['report']['confusion_matrix']))
     plt.savefig(config['report']['confusion_matrix'])
     plt.show()
 
