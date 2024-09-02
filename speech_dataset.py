@@ -75,7 +75,7 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
 
     for spec, speaker in data:
         # w/ channel
-        _, c, _, _ = spec.shape
+        c, _, _ = spec.shape
         spec = rearrange(spec, 'c f t -> (c f) t')
         specs.append(spec)
         speakers.append(speaker)
