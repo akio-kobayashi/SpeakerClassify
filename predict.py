@@ -41,8 +41,10 @@ def predict(config:dict):
     df.to_csv(config['report']['path'])
     
     # 混同行列
-    cm = confusion_matrix(targets, predicts, normalize='true', labels = sorted(speaker2idx.items(), key=lambda x:x[1]))
-    disp = ConfusionMatrixDisplay(consusion_matrix=cm, display_labels=sorted(speaker2idx.items(), key=lambda x:x[1]))
+    target_labels = [ idx2speaker[id] for id in targets ]
+    predict_labels = [ idx2speaker[id] for id in predicts ]
+    cm = confusion_matrix(target_labels, predict_labels, normalize='true')
+    disp = ConfusionMatrixDisplay(consusion_matrix=cm)
     disp.plot()
     #plt.save_fig(os.path.join(config['logger']['save_dir'], config['report']['confusion_matrix']))
     plt.savefig(config['report']['confusion_matrix'])
