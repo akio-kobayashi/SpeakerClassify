@@ -37,7 +37,7 @@ class Baseline(nn.Module):
         self.block=nn.Sequential(
             ConvBlock(1, 64, kernel_size=16, stride=2),
             ConvBlock(64, 512, kernel_size=8, stride=2),
-            ConvBlock(512, 512, kernel_size=8, stride=2),
+            ConvBlock(512, 512, kernel_size=8, stride=1),
             ConvBlock(512, 512, kernel_size=4, stride=1)
         )
 
