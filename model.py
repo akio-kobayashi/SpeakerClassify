@@ -35,9 +35,9 @@ class Baseline(nn.Module):
         # このうちチャンネルは，まず1チャンネル（モノラル）から始まり，
         # self.block出力で512チャンネルになる
         self.block=nn.Sequential(
-            ConvBlock(1, 64, kernel_size=16, stride=8),
-            ConvBlock(64, 512, kernel_size=8, stride=4),
-            ConvBlock(512, 512, kernel_size=8, stride=4),
+            ConvBlock(1, 64, kernel_size=16, stride=4),
+            ConvBlock(64, 512, kernel_size=8, stride=2),
+            ConvBlock(512, 512, kernel_size=8, stride=2),
             ConvBlock(512, 512, kernel_size=4, stride=1)
         )
 
