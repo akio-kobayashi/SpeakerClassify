@@ -85,7 +85,6 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
     # バッチはFloatTensorで（バッチサイズ，チャンネル，サンプル数）
     specs = nn.utils.rnn.pad_sequence(specs, batch_first=True)
     specs = rearrange(specs, 'b t (c f) -> b c f t', c=c)
-    print(specs.shape)
     
     # 話者のインデックスを配列（Tensor）に変換
     speakers = torch.from_numpy(np.array(speakers)).clone()
