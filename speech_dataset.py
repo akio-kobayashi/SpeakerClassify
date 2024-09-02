@@ -35,7 +35,7 @@ class SpeechDataset(torch.utils.data.Dataset):
                 with open(save_path, 'wb') as f:
                     pickle.dump(self.speaker2idx, f)
 
-        self.transform = torchaudio.transform.MelSpectrogram(sample_rate)
+        self.transform = torchaudio.transforms.MelSpectrogram(sample_rate)
 
     def __len__(self) -> int:
         return len(self.df)
