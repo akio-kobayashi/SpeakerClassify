@@ -75,14 +75,14 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
 
     for spec, speaker in data:
         # w/ channel
+        _, c, _, _ = spec.shape
+        spec = rearrange(spec, 'c f t -> (c f) t')
         specs.append(spec)
         speakers.append(speaker)
 
     # データはサンプル数（長さ）が異なるので，長さを揃える
     # 一番長いサンプルよりも短いサンプルに対してゼロ詰めで長さをあわせる
     # バッチはFloatTensorで（バッチサイズ，チャンネル，サンプル数）
-    _, c, _, _ = specs.shape
-    specs = rearrange(specs, 'b c f t -> b (c f) t')
     spees = nn.utils.rnn.pad_sequence(specs, batch_first=True)
     specs = rearrange(specs, 'b (c f) t -> b c f t', c=c)
     #specs = rearrange(waves, 'b c f c -> b c f t')
