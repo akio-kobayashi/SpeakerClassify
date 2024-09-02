@@ -75,7 +75,7 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
 
     for spec, speaker in data:
         # w/ channel
-        specs.append(wave)
+        specs.append(spec)
         speakers.append(speaker)
 
     # データはサンプル数（長さ）が異なるので，長さを揃える
