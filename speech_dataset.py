@@ -32,8 +32,9 @@ class SpeechDataset(torch.utils.data.Dataset):
         self.idx2speaker = {v: k for k, v in self.speaker2idx.items()}
 
         if speaker2idx is None and save_path is not None:
-            with open(save_path, 'wb') as f:
-                pickle.dump(self.speaker2idx, f)
+            if os.path.isfile(save_path) == False:
+                with open(save_path, 'wb') as f:
+                    pickle.dump(self.speaker2idx, f)
 
     def __len__(self) -> int:
         return len(self.df)

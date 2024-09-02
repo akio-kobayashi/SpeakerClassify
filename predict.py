@@ -37,13 +37,15 @@ def predict(config:dict):
     # 全体の正解率など
     df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
     print(df)
-    df.to_csv(os.path.join(config['logger']['save_dir'], config['report']['path']))
-
+    #df.to_csv(os.path.join(config['logger']['save_dir'], config['report']['path']))
+    df.to_csv(config['report']['path'])
+    
     # 混同行列
     cm = confusion_matrix(targets, predicts, normalize='true', labels = sorted(speaker2idx.items(), key=lambda x:x[1]))
     disp = ConfusionMatrixDisplay(consusion_matrix=cm, display_labels=sorted(speaker2idx.items(), key=lambda x:x[1]))
     disp.plot()
-    plt.save(os.path.join(config['logger']['save_dir'], config['report']['confusion_matrix']))
+    #plt.save_fig(os.path.join(config['logger']['save_dir'], config['report']['confusion_matrix']))
+    plt.savefig(config['report']['confusion_matrix'])
     plt.show()
 
 if __name__ == '__main__':
