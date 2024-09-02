@@ -25,7 +25,7 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
         speaker2idx = pickle.load(f)
     idx2speaker = {v: k for k, v in speaker2idx.items()}
 
-    transform = torchaudio.transforms.MelSpectrogram(sample_rate)
+    transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=40)
     predicts, targets = [], []
     with torch.no_grad():
         df = pd.read_csv(config['csv'])
