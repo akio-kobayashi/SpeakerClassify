@@ -12,9 +12,10 @@ import pickle
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
 import pprint
 import warnings
+from einops import rearrange
 warnings.filterwarnings('ignore')
 
-def predict(config:dict, data_type="eval"):
+def predict(config:dict, data_type="eval", sample_rate=16000):
 
     lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config).cuda()
     lite.eval()
@@ -24,13 +25,15 @@ def predict(config:dict, data_type="eval"):
         speaker2idx = pickle.load(f)
     idx2speaker = {v: k for k, v in speaker2idx.items()}
 
+    transform = torchaudio.transforms.MelSpectrogram(sample_rate)
     predicts, targets = [], []
     with torch.no_grad():
         df = pd.read_csv(config['csv'])
         for idx, row in df.query('data_type==@data_type').iterrows():
             wave, sr = torchaudio.load(row['path'])
-            wave = wave.unsqueeze(0)
-            logits = lite.forward(wave.cuda())
+            spec = transform(wave)
+            spec = rearrange(spec, '(b c) f t -> b c f t', b=1)
+            logits = lite.forward(spec.cuda())
             predicts.append(torch.argmax(logits, axis=-1).item())
             targets.append(speaker2idx[row['speaker']])
 
