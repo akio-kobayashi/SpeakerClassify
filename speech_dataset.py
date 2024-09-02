@@ -20,7 +20,6 @@ class SpeechDataset(torch.utils.data.Dataset):
 
         data_type = 'valid' if valid is True else 'train'
         self.df = pd.read_csv(csv_path).query('data_type==@data_type')
-        #self.df = pd.read_csv(csv_path)
         self.sample_rate = sample_rate
 
         if speaker2idx is not None:
@@ -35,6 +34,8 @@ class SpeechDataset(torch.utils.data.Dataset):
             if os.path.isfile(save_path) == False:
                 with open(save_path, 'wb') as f:
                     pickle.dump(self.speaker2idx, f)
+
+        self.transform = torchaudio.transform.MelSpectrogram(sample_rate)
 
     def __len__(self) -> int:
         return len(self.df)
@@ -54,12 +55,13 @@ class SpeechDataset(torch.utils.data.Dataset):
             # 平均をゼロ，分散を1に正規化
             std, mean = torch.std_mean(wave, dim=-1)
             wave = (wave - mean)/std
+            spec = self.transform(wave)
         except:
             raise RuntimeError('file open error')
         
         speaker = self.speaker2idx[row['speaker']]
         
-        return wave, speaker
+        return spec, speaker
     
     def _speaker2idx(self):
         return self.speaker2idx
@@ -68,24 +70,20 @@ class SpeechDataset(torch.utils.data.Dataset):
     バッチデータの作成
 '''
 def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
-    waves = []
+    specs = []
     speakers = []
 
-    for wave, speaker in data:
-        # w/o channel
-        waves.append(wave.t())
+    for spec, speaker in data:
+        # w/ channel
+        specs.append(wave)
         speakers.append(speaker)
 
-    # 音声データはサンプル数（長さ）が異なるので，長さを揃える
+    # データはサンプル数（長さ）が異なるので，長さを揃える
     # 一番長いサンプルよりも短いサンプルに対してゼロ詰めで長さをあわせる
     # バッチはFloatTensorで（バッチサイズ，チャンネル，サンプル数）
-    waves = nn.utils.rnn.pad_sequence(waves, batch_first=True)
-    waves = rearrange(waves, 'b t c -> b c t')
+    spees = nn.utils.rnn.pad_sequence(specs, batch_first=True)
+    #specs = rearrange(waves, 'b c f c -> b c f t')
     # 話者のインデックスを配列（Tensor）に変換
     speakers = torch.from_numpy(np.array(speakers)).clone()
 
-    #waves = waves.squeeze()
-    #if waves.dim() == 1:
-    #    waves = waves.unsqueeze(0)
-        
-    return waves, speakers
+    return specs, speakers

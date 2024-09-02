@@ -11,10 +11,10 @@ class ConvBlock(nn.Module):
 
         # 入力特徴量は（バッチサイズ，チャンネル，サンプル数）
         self.block=nn.Sequential(
-            nn.Conv1d(in_channels,out_channels,
+            nn.Conv2d(in_channels,out_channels,
                       kernel_size, stride, padding,
                       bias=False),
-            nn.BatchNorm1d(out_channels),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU()
         )
 
@@ -31,7 +31,7 @@ class Baseline(nn.Module):
         super().__init__()
 
         # 畳み込みニューラルネットワークは講義で学習すること
-        # 入力特徴量は（バッチサイズ，チャンネル，サンプル数）
+        # 入力特徴量は（バッチサイズ，チャンネル，特徴量，サンプル数）
         # このうちチャンネルは，まず1チャンネル（モノラル）から始まり，
         # self.block出力で512チャンネルになる
         self.block=nn.Sequential(
@@ -47,6 +47,7 @@ class Baseline(nn.Module):
 
     def forward(self, x):
         y = self.block(x)
+        y = rearrange(y, 'b c f t -> b c (f t)')
         y = torch.mean(y, axis=-1)
         y = self.feedforward(y)
 
