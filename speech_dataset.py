@@ -55,7 +55,7 @@ class SpeechDataset(torch.utils.data.Dataset):
             # 平均をゼロ，分散を1に正規化
             std, mean = torch.std_mean(wave, dim=-1)
             wave = (wave - mean)/std
-            spec = self.transform(wave)
+            spec = torch.log(self.transform(wave) + 1.e-9)
         except:
             raise RuntimeError('file open error')
         
