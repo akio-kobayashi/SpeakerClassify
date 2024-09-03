@@ -24,9 +24,9 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
     with open(config['speakers']['save_path'], 'rb') as f:
         speaker2idx = pickle.load(f)
     idx2speaker = {v: k for k, v in speaker2idx.items()}
-
     transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=80)
     predicts, targets = [], []
+    corrects=samples=0
     with torch.no_grad():
         df = pd.read_csv(config['csv'])
         for idx, row in df.query('data_type==@data_type').iterrows():
@@ -40,7 +40,12 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
             logits = lite.forward(spec.cuda())
             predicts.append(torch.argmax(logits, axis=-1).item())
             targets.append(speaker2idx[row['speaker']])
-
+            tgt = speaker2idx[row['speaker']]
+            prd = torch.argmax(logits, axis=-1).item()
+            if tgt==prd:
+                corrects += 1
+            samples += 1
+    #print(f'{corrects} {samples}')
     # 全体の正解率など
     df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
     print(df)
@@ -59,8 +64,11 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
     parser.add_argument('--ckpt', type=str, required=True)
+    parser.add_argument('--gpu',  type=int, default=0)
     args=parser.parse_args()
 
+    #torch.set_default_device("cuda:"+str(args.gpu))
+    
     torch.set_float32_matmul_precision('high')
     with open(args.config, 'r') as yf:
         config = yaml.safe_load(yf)

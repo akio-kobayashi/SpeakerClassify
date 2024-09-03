@@ -43,13 +43,15 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
     parser.add_argument('--checkpoint', type=str, default=None)
+    parser.add_argument('--gpu', type=int, default=0)
     args=parser.parse_args()
 
+    #torch.set_default_device("cuda:"+str(args.gpu))
     torch.set_float32_matmul_precision('high')
     with open(args.config, 'r') as yf:
         config = yaml.safe_load(yf)
 
     if 'config' in config.keys():
         config = config['config']
-        
+    config['trainer'].pop('profiler')
     train(config, args.checkpoint)

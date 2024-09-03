@@ -41,19 +41,18 @@ class Baseline(nn.Module):
             ConvBlock(512, 512, kernel_size=4, stride=(1, 1))
         )
 
-        n_mels=80
         # サンプル数の軸にそって平均を計算した後，
         # （バッチサイズ，チャンネル）データに対してアフィン変換を適用する
         self.feedforward = nn.Sequential(
-            nn.Linear(512*3, 256),
+            nn.Linear(512, 256),
             nn.ReLU(),
             nn.Linear(256, num_speakers)
         )
 
     def forward(self, x):
         y = self.block(x)
-        y = rearrange(y, 'b c f t -> b (c f) t')
-        y = torch.mean(y, axis=-1)
+        #y = rearrange(y, 'b c f t -> b (c f) t')
+        y = torch.mean(torch.mean(y, axis=-1), axis=-1)
         y = self.feedforward(y)
 
         return y

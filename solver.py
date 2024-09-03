@@ -39,8 +39,8 @@ class LightningSolver(pl.LightningModule):
 
     def compute_correct(self, estimates, targets, valid=False):
         prediction = torch.argmax(estimates, dim=-1)
-        self.num_corrects = torch.sum((prediction == targets).long())
-        self.num_samples += targets[0]
+        self.num_corrects += torch.sum((prediction == targets).long())
+        self.num_samples += len(targets)
 
     def training_step(self, batch, batch_idx:int) -> Tensor:
         waves, targets = batch
