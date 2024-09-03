@@ -34,8 +34,8 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
             std, mean = torch.std_mean(wave)
             wave = (wave - maen)/std
             spec = torch.log10(transform(wave) + 1.e-9)
-            std, mean = torch.std_mean(spec)
-            spec = (spec - mean)/std
+            #std, mean = torch.std_mean(spec)
+            #spec = (spec - mean)/std
             spec = rearrange(spec, '(b c) f t -> b c f t', b=1)
             logits = lite.forward(spec.cuda())
             predicts.append(torch.argmax(logits, axis=-1).item())

@@ -55,9 +55,10 @@ class SpeechDataset(torch.utils.data.Dataset):
             # 平均をゼロ，分散を1に正規化
             std, mean = torch.std_mean(wave, dim=-1)
             wave = (wave - mean)/std
+            # 対数メルスペクトログラム (チャンネル，メル次元，サンプル)
             spec = torch.log(self.transform(wave) + 1.e-9)
-            std, mean = torch.std_mean(spec, dim=-1)
-            spech = (spec - mean)/std
+            #std, mean = torch.std_mean(spec, dim=-1)
+            #spech = (spec - mean)/std
         except:
             raise RuntimeError('file open error')
         
