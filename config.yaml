@@ -9,7 +9,7 @@ num_workers: 1
 trainer:
   accelerator: 'auto'
   accumulate_grad_batches: 5
-  max_epochs: 100
+  max_epochs: 10
   precision: '16-mixed'
   profiler: 'simple'
   gradient_clip_val: 5.
