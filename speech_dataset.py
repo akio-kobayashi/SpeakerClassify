@@ -56,6 +56,8 @@ class SpeechDataset(torch.utils.data.Dataset):
             std, mean = torch.std_mean(wave, dim=-1)
             wave = (wave - mean)/std
             spec = torch.log(self.transform(wave) + 1.e-9)
+            std, mean = torch.std_mean(spec, dim=-1)
+            spech = (spec - mean)/std
         except:
             raise RuntimeError('file open error')
         

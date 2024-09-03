@@ -35,19 +35,24 @@ class Baseline(nn.Module):
         # このうちチャンネルは，まず1チャンネル（モノラル）から始まり，
         # self.block出力で512チャンネルになる
         self.block=nn.Sequential(
-            ConvBlock(1, 64, kernel_size=16, stride=2),
-            ConvBlock(64, 512, kernel_size=8, stride=2),
-            ConvBlock(512, 512, kernel_size=8, stride=1),
-            ConvBlock(512, 512, kernel_size=4, stride=1)
+            ConvBlock(1, 64, kernel_size=16, stride=(2, 2)),
+            ConvBlock(64, 512, kernel_size=8, stride=(2, 2)),
+            ConvBlock(512, 512, kernel_size=8, stride=(2, 2)),
+            ConvBlock(512, 512, kernel_size=4, stride=(1, 1))
         )
 
+        n_mels=80
         # サンプル数の軸にそって平均を計算した後，
         # （バッチサイズ，チャンネル）データに対してアフィン変換を適用する
-        self.feedforward = nn.Linear(512, num_speakers)
+        self.feedforward = nn.Sequential(
+            nn.Linear(512*10, 256),
+            nn.ReLU(),
+            nn.Linear(256, num_speakers)
+        )
 
     def forward(self, x):
         y = self.block(x)
-        y = rearrange(y, 'b c f t -> b c (f t)')
+        y = rearrange(y, 'b c f t -> b (c f) t')
         y = torch.mean(y, axis=-1)
         y = self.feedforward(y)
 
