@@ -37,7 +37,7 @@ class Baseline(nn.Module):
         self.block=nn.Sequential(
             ConvBlock(1, 64, kernel_size=16, stride=(2, 2)),
             ConvBlock(64, 512, kernel_size=8, stride=(2, 2)),
-            ConvBlock(512, 512, kernel_size=8, stride=(2, 2)),
+            ConvBlock(512, 512, kernel_size=8, stride=(1, 2)),
             ConvBlock(512, 512, kernel_size=4, stride=(1, 1))
         )
 
@@ -45,7 +45,7 @@ class Baseline(nn.Module):
         # サンプル数の軸にそって平均を計算した後，
         # （バッチサイズ，チャンネル）データに対してアフィン変換を適用する
         self.feedforward = nn.Sequential(
-            nn.Linear(512*10, 256),
+            nn.Linear(512*3, 256),
             nn.ReLU(),
             nn.Linear(256, num_speakers)
         )

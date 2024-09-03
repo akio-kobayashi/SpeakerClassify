@@ -32,7 +32,7 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
         for idx, row in df.query('data_type==@data_type').iterrows():
             wave, sr = torchaudio.load(row['path'])
             std, mean = torch.std_mean(wave)
-            wave = (wave - maen)/std
+            wave = (wave - mean)/std
             spec = torch.log10(transform(wave) + 1.e-9)
             #std, mean = torch.std_mean(spec)
             #spec = (spec - mean)/std
@@ -58,10 +58,12 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
+    parser.add_argument('--ckpt', type=str, required=True)
     args=parser.parse_args()
 
     torch.set_float32_matmul_precision('high')
     with open(args.config, 'r') as yf:
         config = yaml.safe_load(yf)
-        
+
+    config['checkpoint_path'] = args.ckpt
     predict(config) 
