@@ -26,6 +26,7 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
     idx2speaker = {v: k for k, v in speaker2idx.items()}
     transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=80)
     predicts, targets = [], []
+    files, spk_targets, spk_predicts = [], [], [] 
     corrects=samples=0
     with torch.no_grad():
         df = pd.read_csv(config['csv'])
@@ -45,11 +46,19 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
             if tgt==prd:
                 corrects += 1
             samples += 1
+
+            files.append(row['path'])
+            spk_targets.append(row['speaker'])
+            spk_predicts.append(idx2speaker[prd])
+            
     #print(f'{corrects} {samples}')
     # 全体の正解率など
     df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
     print(df)
     df.to_csv(config['report']['path'])
+
+    detail = pd.DataFrame.from_dict({'file': files, 'correct': spk_targets, 'predict': spk_predicts })
+    detail.to_csv(config['report']['detail'])
     
     # 混同行列
     target_labels = [ idx2speaker[id] for id in targets ]
