@@ -2,7 +2,7 @@ import os, sys
 import glob
 import pandas as pd
 
-root='/content/drive/Shareddrive/専門演習I/後期前半/SpeechData/'
+root='/content/drive/Shareddrives/専門演習I/後期前半/SpeechData/'
 data={'path':[], 'data_type':[], 'speaker': [] }
 for file in glob.glob(os.path.join(root, '*/*wav')):
     print(file)
