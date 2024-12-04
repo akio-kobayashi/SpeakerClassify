@@ -63,7 +63,7 @@ class SpeechDataset(torch.utils.data.Dataset):
             #std, mean = torch.std_mean(spec, dim=-1)
             #spech = (spec - mean)/std
         except:
-            raise RuntimeError('file open error')
+            raise RuntimeError('file error', row['path'])
         
         speaker = self.speaker2idx[row['speaker']]
         
