@@ -52,7 +52,7 @@ class SpeechDataset(torch.utils.data.Dataset):
         try:
             # torchaudioで読み込んだ場合，音声データはFloatTensorで（チャンネル，サンプル数）
             wave, sr = torchaudio.load(path)
-            wave = wave[0, :].unsqueeze()
+            wave = wave[0, :].unsqueeze(dim=0)
             if sr != self.sample_rate:
                 resampler = torchaudio.transforms.Resample(sr, self.sample_rate, dtype=wave.dtype)
                 wave = resampler(wave)
