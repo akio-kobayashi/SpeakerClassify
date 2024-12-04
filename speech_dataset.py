@@ -53,7 +53,7 @@ class SpeechDataset(torch.utils.data.Dataset):
             # torchaudioで読み込んだ場合，音声データはFloatTensorで（チャンネル，サンプル数）
             wave, sr = torchaudio.load(path)
             if sr != self.sample_rate:
-                resampler = torchaudio.Resample(sr, self.sample_rate, dtype=wave.dtype)
+                resampler = torchaudio.transforms.Resample(sr, self.sample_rate, dtype=wave.dtype)
                 wave = resampler(wave)
             # 平均をゼロ，分散を1に正規化
             std, mean = torch.std_mean(wave, dim=-1)
