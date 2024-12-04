@@ -32,6 +32,10 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
         df = pd.read_csv(config['csv'])
         for idx, row in df.query('data_type==@data_type').iterrows():
             wave, sr = torchaudio.load(row['path'])
+            wave = wave[0, :].unsqueeze(dim=0)
+            if sr != self.sample_rate:
+                resampler = torchaudio.transforms.Resample(sr, self.sample_rate, dtype=wave.dtype)
+                wave = resampler(wave)
             std, mean = torch.std_mean(wave, dim=-1)
             wave = (wave - mean)/std
             spec = torch.log10(transform(wave) + 1.e-9)
