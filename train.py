@@ -7,11 +7,23 @@ from speech_dataset import SpeechDataset
 from speech_dataset import data_processing
 from argparse import ArgumentParser
 import yaml
+import numpy as np
+import random
 import warnings
 warnings.filterwarnings('ignore')
 
+def set_seed(seed=42):
+    random.seed(seed)  # Python の乱数を固定
+    np.random.seed(seed)  # NumPy の乱数を固定
+    torch.manual_seed(seed)  # PyTorch の CPU 乱数を固定
+    torch.cuda.manual_seed(seed)  # CUDA (GPU) の乱数を固定
+    torch.cuda.manual_seed_all(seed)  # 複数 GPU の場合にも適用
+    torch.backends.cudnn.deterministic = True  # cuDNN を決定的動作に
+    torch.backends.cudnn.benchmark = False  # 最適化をオフ（再現性を優先）
+
 def train(config:dict, model):
 
+    set_seed(42)
     lite = LightningSolver(config, model)
        
     train_dataset = SpeechDataset(csv_path=config['csv'], save_path=config['speakers']['save_path'], valid=False)
