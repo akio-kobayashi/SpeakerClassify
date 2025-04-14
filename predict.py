@@ -23,7 +23,6 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
     speaker2idx={}
     with open(config['speakers']['save_path'], 'rb') as f:
         speaker2idx = pickle.load(f)
-    print(len(speaker2idx))
     idx2speaker = {v: k for k, v in speaker2idx.items()}
     transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=80)
     predicts, targets = [], []
@@ -57,8 +56,19 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
             spk_predicts.append(idx2speaker[prd])
             
     #print(f'{corrects} {samples}')
+    # 出現するクラスインデックス（int型）を取得
+    unique_labels = sorted(set(targets) | set(predicts))
+    # speaker2idx の key（話者名）を value順（インデックス順）にソートして取得
+    sorted_speakers = sorted(speaker2idx.items(), key=lambda x: x[1])
+    all_target_names = [name for name, idx in sorted_speakers]
+
+    # 出現クラスに対応する名前だけ抽出
+    target_names_used = [all_target_names[i] for i in unique_labels]
+
     # 全体の正解率など
-    df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
+    #df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
+    df = pd.DataFrame(classification_report(targets, predicts, labels=unique_labels, target_names = target_name_used, output_dict=True))
+    
     print(df)
     df.to_csv(config['report']['path'])
 
