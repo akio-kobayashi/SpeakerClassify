@@ -23,6 +23,7 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
     speaker2idx={}
     with open(config['speakers']['save_path'], 'rb') as f:
         speaker2idx = pickle.load(f)
+    print(len(speaker2idx))
     idx2speaker = {v: k for k, v in speaker2idx.items()}
     transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=80)
     predicts, targets = [], []
