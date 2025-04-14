@@ -67,7 +67,7 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
 
     # 全体の正解率など
     #df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
-    df = pd.DataFrame(classification_report(targets, predicts, labels=unique_labels, target_names = target_name_used, output_dict=True))
+    df = pd.DataFrame(classification_report(targets, predicts, labels=unique_labels, target_names = target_names_used, output_dict=True))
     
     print(df)
     df.to_csv(config['report']['path'])
