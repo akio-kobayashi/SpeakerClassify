@@ -43,7 +43,6 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
             #spec = (spec - mean)/std
             spec = rearrange(spec, '(b c) f t -> b c f t', b=1)
             logits = lite.forward(spec.cuda())
-            print(logits.shape)
             predicts.append(torch.argmax(logits, axis=-1).item())
             targets.append(speaker2idx[row['speaker']])
             tgt = speaker2idx[row['speaker']]
