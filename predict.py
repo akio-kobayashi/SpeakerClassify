@@ -55,7 +55,6 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
             spk_targets.append(row['speaker'])
             spk_predicts.append(idx2speaker[prd])
             
-    #print(f'{corrects} {samples}')
     # 出現するクラスインデックス（int型）を取得
     unique_labels = sorted(set(targets) | set(predicts))
     # speaker2idx の key（話者名）を value順（インデックス順）にソートして取得
@@ -64,6 +63,7 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
 
     # 出現クラスに対応する名前だけ抽出
     target_names_used = [all_target_names[i] for i in unique_labels]
+    print(f'{corrects} {samples} {corrects/samples}')
 
     # 全体の正解率など
     #df = pd.DataFrame(classification_report(targets, predicts, target_names = speaker2idx.keys(), output_dict=True))
