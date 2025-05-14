@@ -29,14 +29,14 @@ def train(config:dict, model):
     train_dataset = SpeechDataset(csv_path=config['csv'], save_path=config['speakers']['save_path'], valid=False)
     train_loader = data.DataLoader(dataset=train_dataset,
                                    batch_size=config['batch_size'],
-                                   num_workers=1,
+                                   num_workers=0,
                                    pin_memory=True,
                                    shuffle=True, 
                                    collate_fn=lambda x: data_processing(x))
     valid_dataset = SpeechDataset(csv_path=config['csv'], speaker2idx=train_dataset._speaker2idx(), valid=True)
     valid_loader = data.DataLoader(dataset=valid_dataset,
                                    batch_size=config['batch_size'],
-                                   num_workers=1,
+                                   num_workers=0,
                                    pin_memory=True,
                                    shuffle=False, 
                                    collate_fn=lambda x: data_processing(x))
