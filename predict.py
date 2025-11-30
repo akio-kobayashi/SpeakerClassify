@@ -17,7 +17,7 @@ warnings.filterwarnings('ignore')
 
 def predict(config:dict, data_type="eval", sample_rate=16000):
 
-    lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config).cuda()
+    lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config, weights_only=False).cuda()
     lite.eval()
 
     speaker2idx={}
