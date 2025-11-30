@@ -21,7 +21,7 @@ def predict(config:dict, data_type="eval", sample_rate=16000):
     lite = LightningSolver(config=config)
     lite.load_state_dict(ckpt['state_dict'], strict=False)
     lite = lite.cuda()
-    #lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config, weights_only=False).cuda()
+    #lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config).cuda()
     lite.eval()
 
     speaker2idx={}
