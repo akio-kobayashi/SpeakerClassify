@@ -15,10 +15,10 @@ import warnings
 from einops import rearrange
 warnings.filterwarnings('ignore')
 
-def predict(config:dict, data_type="eval", sample_rate=16000):
+def predict(config:dict, model, data_type="eval", sample_rate=16000):
 
     ckpt = torch.load(config['checkpoint_path'], weights_only=False)
-    lite = LightningSolver(config=config)
+    lite = LightningSolver(config=config, model=model)
     lite.load_state_dict(ckpt['state_dict'], strict=False)
     lite = lite.cuda()
     #lite = LightningSolver.load_from_checkpoint(config['checkpoint_path'], strict=False, config=config).cuda()
