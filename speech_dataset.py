@@ -12,6 +12,7 @@ import torchaudio
 import scipy.signal as signal
 from einops import rearrange
 import pickle
+from tqdm import tqdm
 
 class SpeechDataset(torch.utils.data.Dataset):
 
@@ -37,38 +38,45 @@ class SpeechDataset(torch.utils.data.Dataset):
 
         self.transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=80)
 
-    def __len__(self) -> int:
-        return len(self.df)
+        # データをメモリにキャッシュする
+        self.cached_data = []
+        print(f"Loading {data_type} dataset ({len(self.df)} files) into memory...")
+        
+        for idx in tqdm(range(len(self.df)), desc=f"Loading {data_type}"):
+            spec, speaker = self._load_and_process(idx)
+            self.cached_data.append((spec, speaker))
 
-    '''
-        データフレームからidx番目のサンプルを抽出する
-    '''
-    def __getitem__(self, idx:int) -> Tuple[Tensor, int]:
+    def _load_and_process(self, idx: int) -> Tuple[Tensor, int]:
         row = self.df.iloc[idx]
-        # audio path
         path = row['path']
 
-
         try:
-            # torchaudioで読み込んだ場合，音声データはFloatTensorで（チャンネル，サンプル数）
             wave, sr = torchaudio.load(path)
             wave = wave[0, :].unsqueeze(dim=0)
             if sr != self.sample_rate:
                 resampler = torchaudio.transforms.Resample(sr, self.sample_rate, dtype=wave.dtype)
                 wave = resampler(wave)
+            
             # 平均をゼロ，分散を1に正規化
             std, mean = torch.std_mean(wave, dim=-1)
-            wave = (wave - mean)/std
+            wave = (wave - mean) / (std + 1e-9)
+            
             # 対数メルスペクトログラム (チャンネル，メル次元，サンプル)
             spec = torch.log(self.transform(wave) + 1.e-9)
-            #std, mean = torch.std_mean(spec, dim=-1)
-            #spech = (spec - mean)/std
-        except:
-            raise RuntimeError('file error', row['path'])
-        
-        speaker = self.speaker2idx[row['speaker']]
-        
-        return spec, speaker
+            
+            speaker = self.speaker2idx[row['speaker']]
+            return spec, speaker
+            
+        except Exception as e:
+            print(f"Error loading {path}: {e}")
+            raise RuntimeError('file error', path)
+
+    def __len__(self) -> int:
+        return len(self.cached_data)
+
+    def __getitem__(self, idx:int) -> Tuple[Tensor, int]:
+        # メモリからキャッシュされたデータを返す
+        return self.cached_data[idx]
     
     def _speaker2idx(self):
         return self.speaker2idx
@@ -88,8 +96,6 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
         speakers.append(speaker)
 
     # データはサンプル数（長さ）が異なるので，長さを揃える
-    # 一番長いサンプルよりも短いサンプルに対してゼロ詰めで長さをあわせる
-    # バッチはFloatTensorで（バッチサイズ，チャンネル，サンプル数）
     specs = nn.utils.rnn.pad_sequence(specs, batch_first=True)
     specs = rearrange(specs, 'b t (c f) -> b c f t', c=c)
     

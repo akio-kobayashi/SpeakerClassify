@@ -1,5 +1,5 @@
 import torch
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 from lightning.pytorch.loggers import TensorBoardLogger
 import torch.utils.data as data
 from solver import LightningSolver

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import os, sys
 import torch
 import torchaudio
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 import numpy as np
 from solver import LightningSolver
 from argparse import ArgumentParser
@@ -42,7 +42,7 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
                 wave = resampler(wave)
             std, mean = torch.std_mean(wave, dim=-1)
             wave = (wave - mean)/std
-            spec = torch.log10(transform(wave) + 1.e-9)
+            spec = torch.log(transform(wave) + 1.e-9)
             #std, mean = torch.std_mean(spec)
             #spec = (spec - mean)/std
             spec = rearrange(spec, '(b c) f t -> b c f t', b=1)

@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
-import pytorch_lightning as pl
+import lightning.pytorch as pl
 from typing import Tuple
 from einops import rearrange
 from model import Baseline
