@@ -14,6 +14,9 @@ from einops import rearrange
 import pickle
 from tqdm import tqdm
 
+# カーネルが生きている限り保持されるグローバルキャッシュ
+_GLOBAL_DATA_CACHE = {}
+
 class SpeechDataset(torch.utils.data.Dataset):
 
     def __init__(self, csv_path:str, sample_rate=16000, speaker2idx=None, save_path=None, valid=False) -> None:
@@ -38,13 +41,21 @@ class SpeechDataset(torch.utils.data.Dataset):
 
         self.transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=80)
 
-        # データをメモリにキャッシュする
-        self.cached_data = []
-        print(f"Loading {data_type} dataset ({len(self.df)} files) into memory...")
+        # キャッシュキーの作成（CSVパスとデータ種別で一意に特定）
+        cache_key = (csv_path, data_type)
         
-        for idx in tqdm(range(len(self.df)), desc=f"Loading {data_type}"):
-            spec, speaker = self._load_and_process(idx)
-            self.cached_data.append((spec, speaker))
+        global _GLOBAL_DATA_CACHE
+        if cache_key in _GLOBAL_DATA_CACHE:
+            print(f"Using cached {data_type} dataset ({len(self.df)} files). No Drive access needed.")
+            self.cached_data = _GLOBAL_DATA_CACHE[cache_key]
+        else:
+            self.cached_data = []
+            print(f"Loading {data_type} dataset ({len(self.df)} files) into memory for the first time...")
+            for idx in tqdm(range(len(self.df)), desc=f"Loading {data_type}"):
+                spec, speaker = self._load_and_process(idx)
+                self.cached_data.append((spec, speaker))
+            # キャッシュに保存
+            _GLOBAL_DATA_CACHE[cache_key] = self.cached_data
 
     def _load_and_process(self, idx: int) -> Tuple[Tensor, int]:
         row = self.df.iloc[idx]
@@ -57,13 +68,10 @@ class SpeechDataset(torch.utils.data.Dataset):
                 resampler = torchaudio.transforms.Resample(sr, self.sample_rate, dtype=wave.dtype)
                 wave = resampler(wave)
             
-            # 平均をゼロ，分散を1に正規化
             std, mean = torch.std_mean(wave, dim=-1)
             wave = (wave - mean) / (std + 1e-9)
             
-            # 対数メルスペクトログラム (チャンネル，メル次元，サンプル)
             spec = torch.log(self.transform(wave) + 1.e-9)
-            
             speaker = self.speaker2idx[row['speaker']]
             return spec, speaker
             
@@ -75,7 +83,6 @@ class SpeechDataset(torch.utils.data.Dataset):
         return len(self.cached_data)
 
     def __getitem__(self, idx:int) -> Tuple[Tensor, int]:
-        # メモリからキャッシュされたデータを返す
         return self.cached_data[idx]
     
     def _speaker2idx(self):
@@ -89,17 +96,13 @@ def data_processing(data:Tuple[Tensor,int]) -> Tuple[Tensor, Tensor]:
     speakers = []
 
     for spec, speaker in data:
-        # w/ channel
         c, _, _ = spec.shape
         spec = rearrange(spec, 'c f t -> t (c f)')
         specs.append(spec)
         speakers.append(speaker)
 
-    # データはサンプル数（長さ）が異なるので，長さを揃える
     specs = nn.utils.rnn.pad_sequence(specs, batch_first=True)
     specs = rearrange(specs, 'b t (c f) -> b c f t', c=c)
-    
-    # 話者のインデックスを配列（Tensor）に変換
     speakers = torch.from_numpy(np.array(speakers)).clone()
 
     return specs, speakers
