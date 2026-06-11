@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import os, sys
+import re
 import torch
 import torchaudio
 import lightning.pytorch as pl
@@ -15,6 +16,15 @@ import warnings
 from einops import rearrange
 warnings.filterwarnings('ignore')
 
+
+def speaker_to_student_label(speaker_name: str) -> str:
+    speaker_name = str(speaker_name)
+    base_name = os.path.basename(os.path.normpath(speaker_name))
+    match = re.search(r'(\d{8,})', base_name)
+    if match:
+        return match.group(1)
+    return base_name
+
 def predict(config:dict, model, data_type="eval", sample_rate=16000):
 
     ckpt = torch.load(config['checkpoint_path'], weights_only=False)
@@ -28,6 +38,7 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
     with open(config['speakers']['save_path'], 'rb') as f:
         speaker2idx = pickle.load(f)
     idx2speaker = {v: k for k, v in speaker2idx.items()}
+    idx2student = {idx: speaker_to_student_label(spk) for idx, spk in idx2speaker.items()}
     transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=80)
     predicts, targets = [], []
     files, spk_targets, spk_predicts = [], [], [] 
@@ -66,8 +77,8 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
             samples += 1
 
             files.append(row['path'])
-            spk_targets.append(row['speaker'])
-            spk_predicts.append(idx2speaker.get(prd, f'<unknown:{prd}>'))
+            spk_targets.append(speaker_to_student_label(row['speaker']))
+            spk_predicts.append(idx2student.get(prd, f'<unknown:{prd}>'))
 
     if not samples:
         raise RuntimeError(
@@ -79,7 +90,7 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
     unique_labels = sorted(set(targets) | set(predicts))
     # speaker2idx の key（話者名）を value順（インデックス順）にソートして取得
     sorted_speakers = sorted(speaker2idx.items(), key=lambda x: x[1])
-    all_target_names = [name for name, idx in sorted_speakers]
+    all_target_names = [speaker_to_student_label(name) for name, idx in sorted_speakers]
 
     # 出現クラスに対応する名前だけ抽出
     target_names_used = [all_target_names[i] for i in unique_labels]
@@ -96,8 +107,8 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
     detail.to_csv(config['report']['detail'])
     
     # 混同行列
-    target_labels = [ idx2speaker[id] for id in targets ]
-    predict_labels = [ idx2speaker[id] for id in predicts ]
+    target_labels = [idx2student[id] for id in targets]
+    predict_labels = [idx2student.get(id, f'<unknown:{id}>') for id in predicts]
     cm = confusion_matrix(target_labels, predict_labels, normalize='true')
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     disp.plot()
