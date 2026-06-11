@@ -25,6 +25,14 @@ def speaker_to_student_label(speaker_name: str) -> str:
         return match.group(1)
     return base_name
 
+
+def get_label_map_path(config: dict) -> str:
+    label_map_path = config['report'].get('label_map')
+    if label_map_path:
+        return label_map_path
+    base, _ = os.path.splitext(config['report']['confusion_matrix'])
+    return base + '_label_map.csv'
+
 def predict(config:dict, model, data_type="eval", sample_rate=16000):
 
     ckpt = torch.load(config['checkpoint_path'], weights_only=False)
@@ -86,10 +94,20 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
             'Check speakers.pkl and the CSV speaker labels.'
         )
             
-    # 出現するクラスインデックス（int型）を取得
-    unique_labels = sorted(set(targets) | set(predicts))
     # speaker2idx の key（話者名）を value順（インデックス順）にソートして取得
     sorted_speakers = sorted(speaker2idx.items(), key=lambda x: x[1])
+    label_map = pd.DataFrame(
+        {
+            'label': [idx + 1 for idx, _ in sorted_speakers],
+            'student_id': [speaker_to_student_label(name) for name, _ in sorted_speakers],
+            'speaker': [name for name, _ in sorted_speakers],
+        }
+    )
+    label_map_path = get_label_map_path(config)
+    label_map.to_csv(label_map_path, index=False)
+
+    # 出現するクラスインデックス（int型）を取得
+    unique_labels = sorted(set(targets) | set(predicts))
     all_target_names = [speaker_to_student_label(name) for name, idx in sorted_speakers]
 
     # 出現クラスに対応する名前だけ抽出
@@ -102,15 +120,18 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
     
     print(df)
     df.to_csv(config['report']['path'])
+    print(label_map)
+    print(f'label map: {label_map_path}')
 
     detail = pd.DataFrame.from_dict({'file': files, 'correct': spk_targets, 'predict': spk_predicts })
     detail.to_csv(config['report']['detail'])
     
     # 混同行列
-    target_labels = [idx2student[id] for id in targets]
-    predict_labels = [idx2student.get(id, f'<unknown:{id}>') for id in predicts]
-    cm = confusion_matrix(target_labels, predict_labels, normalize='true')
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    target_labels = [id + 1 for id in targets]
+    predict_labels = [id + 1 for id in predicts]
+    cm_labels = [idx + 1 for idx, _ in sorted_speakers]
+    cm = confusion_matrix(target_labels, predict_labels, labels=cm_labels, normalize='true')
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=cm_labels)
     disp.plot()
     plt.savefig(config['report']['confusion_matrix'])
     plt.show()
