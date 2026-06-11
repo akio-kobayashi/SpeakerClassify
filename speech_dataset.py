@@ -17,32 +17,62 @@ from tqdm import tqdm
 # カーネルが生きている限り保持されるグローバルキャッシュ
 _GLOBAL_DATA_CACHE = {}
 
+
+def build_speaker2idx(df: pd.DataFrame) -> dict:
+    speakers = sorted(df['speaker'].dropna().unique())
+    return {spk: idx for idx, spk in enumerate(speakers)}
+
+
+def save_speaker2idx(speaker2idx: dict, save_path: str) -> None:
+    save_dir = os.path.dirname(save_path)
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+    with open(save_path, 'wb') as f:
+        pickle.dump(speaker2idx, f)
+
 class SpeechDataset(torch.utils.data.Dataset):
 
     def __init__(self, csv_path:str, sample_rate=16000, speaker2idx=None, save_path=None, valid=False) -> None:
         super().__init__()
 
         data_type = 'valid' if valid is True else 'train'
-        self.df = pd.read_csv(csv_path).query('data_type==@data_type')
+        self.df = (
+            pd.read_csv(csv_path)
+            .query('data_type==@data_type')
+            .sort_values(['speaker', 'path'])
+            .reset_index(drop=True)
+        )
         self.sample_rate = sample_rate
 
         if speaker2idx is not None:
+            unknown_speakers = sorted(set(self.df['speaker']) - set(speaker2idx))
+            if unknown_speakers:
+                print(
+                    f"Skip {len(unknown_speakers)} unknown speakers in {data_type}: "
+                    + ', '.join(unknown_speakers)
+                )
+                self.df = (
+                    self.df.query('speaker in @speaker2idx')
+                    .reset_index(drop=True)
+                )
             self.speaker2idx = speaker2idx
         else:
-            self.speaker2idx = {}
-            for idx, spk in enumerate(self.df['speaker'].unique()):
-                self.speaker2idx[spk] = idx
+            self.speaker2idx = build_speaker2idx(self.df)
         self.idx2speaker = {v: k for k, v in self.speaker2idx.items()}
 
         if speaker2idx is None and save_path is not None:
-            if os.path.isfile(save_path) == False:
-                with open(save_path, 'wb') as f:
-                    pickle.dump(self.speaker2idx, f)
+            if os.path.isfile(save_path):
+                with open(save_path, 'rb') as f:
+                    saved_speaker2idx = pickle.load(f)
+                if saved_speaker2idx != self.speaker2idx:
+                    print(f"speaker2idx changed. Overwrite {save_path}.")
+            save_speaker2idx(self.speaker2idx, save_path)
 
         self.transform = torchaudio.transforms.MelSpectrogram(sample_rate, n_mels=80)
 
-        # キャッシュキーの作成（CSVパスとデータ種別で一意に特定）
-        cache_key = (csv_path, data_type)
+        # キャッシュキーの作成（話者ID対応が変わった場合は別データとして扱う）
+        speaker_key = tuple(sorted(self.speaker2idx.items()))
+        cache_key = (csv_path, data_type, speaker_key)
         
         global _GLOBAL_DATA_CACHE
         if cache_key in _GLOBAL_DATA_CACHE:

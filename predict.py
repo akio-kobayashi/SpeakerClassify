@@ -32,9 +32,19 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
     predicts, targets = [], []
     files, spk_targets, spk_predicts = [], [], [] 
     corrects=samples=0
+    skipped_unknown = []
     with torch.no_grad():
         df = pd.read_csv(config['csv'])
+        unknown_speakers = sorted(set(df.query('data_type==@data_type')['speaker']) - set(speaker2idx))
+        if unknown_speakers:
+            print(
+                f"Skip {len(unknown_speakers)} unknown speakers in {data_type}: "
+                + ', '.join(unknown_speakers)
+            )
         for idx, row in df.query('data_type==@data_type').iterrows():
+            if row['speaker'] not in speaker2idx:
+                skipped_unknown.append(row['path'])
+                continue
             wave, sr = torchaudio.load(row['path'])
             wave = wave[0, :].unsqueeze(dim=0)
             if sr != 16_000:
@@ -57,7 +67,13 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
 
             files.append(row['path'])
             spk_targets.append(row['speaker'])
-            spk_predicts.append(idx2speaker[prd])
+            spk_predicts.append(idx2speaker.get(prd, f'<unknown:{prd}>'))
+
+    if not samples:
+        raise RuntimeError(
+            'No evaluable samples remain after speaker filtering. '
+            'Check speakers.pkl and the CSV speaker labels.'
+        )
             
     # 出現するクラスインデックス（int型）を取得
     unique_labels = sorted(set(targets) | set(predicts))
