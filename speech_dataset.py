@@ -18,8 +18,20 @@ from tqdm import tqdm
 _GLOBAL_DATA_CACHE = {}
 
 
+def speaker_to_student_label(speaker_name: str) -> str:
+    speaker_name = str(speaker_name)
+    base_name = os.path.basename(os.path.normpath(speaker_name))
+    match = re.search(r'(\d{8,})', base_name)
+    if match:
+        return match.group(1)
+    return base_name
+
+
 def build_speaker2idx(df: pd.DataFrame) -> dict:
-    speakers = sorted(df['speaker'].dropna().unique())
+    speakers = sorted(
+        df['speaker'].dropna().unique(),
+        key=lambda spk: (speaker_to_student_label(spk), str(spk)),
+    )
     return {spk: idx for idx, spk in enumerate(speakers)}
 
 
@@ -39,7 +51,9 @@ class SpeechDataset(torch.utils.data.Dataset):
         self.df = (
             pd.read_csv(csv_path)
             .query('data_type==@data_type')
-            .sort_values(['speaker', 'path'])
+            .assign(_student_label=lambda df: df['speaker'].map(speaker_to_student_label))
+            .sort_values(['_student_label', 'speaker', 'path'])
+            .drop(columns=['_student_label'])
             .reset_index(drop=True)
         )
         self.sample_rate = sample_rate

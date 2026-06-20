@@ -126,13 +126,19 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
     detail = pd.DataFrame.from_dict({'file': files, 'correct': spk_targets, 'predict': spk_predicts })
     detail.to_csv(config['report']['detail'])
     
-    # 混同行列
-    target_labels = [id_to_student_id[id] for id in targets]
-    predict_labels = [id_to_student_id[id] for id in predicts]
-    cm_labels = [id_to_student_id[idx] for _, idx in sorted_speakers]
+    # 混同行列の計算は内部IDで統一し、表示は縦軸を学生ID、横軸を内部IDにする。
+    target_labels = targets
+    predict_labels = predicts
+    cm_labels = [idx for _, idx in sorted_speakers]
+    cm_true_display_labels = [id_to_student_id[idx] for idx in cm_labels]
+    cm_pred_display_labels = cm_labels
     cm = confusion_matrix(target_labels, predict_labels, labels=cm_labels, normalize='true')
-    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=cm_labels)
-    disp.plot()
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=cm_pred_display_labels)
+    disp.plot(xticks_rotation=0)
+    disp.ax_.set_yticks(range(len(cm_true_display_labels)))
+    disp.ax_.set_yticklabels(cm_true_display_labels)
+    disp.ax_.set_xlabel('Predicted label (internal ID)')
+    disp.ax_.set_ylabel('True label (student ID)')
     plt.savefig(config['report']['confusion_matrix'])
     plt.show()
 
