@@ -96,9 +96,10 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
             
     # speaker2idx の key（話者名）を value順（インデックス順）にソートして取得
     sorted_speakers = sorted(speaker2idx.items(), key=lambda x: x[1])
+    id_to_student_id = {idx: speaker_to_student_label(name) for name, idx in sorted_speakers}
     label_map = pd.DataFrame(
         {
-            'label': [idx + 1 for idx, _ in sorted_speakers],
+            'label': [idx for _, idx in sorted_speakers],
             'student_id': [speaker_to_student_label(name) for name, _ in sorted_speakers],
             'speaker': [name for name, _ in sorted_speakers],
         }
@@ -108,10 +109,9 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
 
     # 出現するクラスインデックス（int型）を取得
     unique_labels = sorted(set(targets) | set(predicts))
-    all_target_names = [speaker_to_student_label(name) for name, idx in sorted_speakers]
 
     # 出現クラスに対応する名前だけ抽出
-    target_names_used = [all_target_names[i] for i in unique_labels]
+    target_names_used = [id_to_student_id.get(id, f'<unknown:{id}>') for id in unique_labels]
     print(f'{corrects} {samples} {corrects/samples}')
 
     # 全体の正解率など
@@ -127,9 +127,9 @@ def predict(config:dict, model, data_type="eval", sample_rate=16000):
     detail.to_csv(config['report']['detail'])
     
     # 混同行列
-    target_labels = [id + 1 for id in targets]
-    predict_labels = [id + 1 for id in predicts]
-    cm_labels = [idx + 1 for idx, _ in sorted_speakers]
+    target_labels = [id_to_student_id[id] for id in targets]
+    predict_labels = [id_to_student_id[id] for id in predicts]
+    cm_labels = [id_to_student_id[idx] for _, idx in sorted_speakers]
     cm = confusion_matrix(target_labels, predict_labels, labels=cm_labels, normalize='true')
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=cm_labels)
     disp.plot()
